@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>生活服务智能体 - Life Service AI Agent</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap');
+
+*{margin:0;padding:0;box-sizing:border-box}
+
+body{
+  font-family:'Noto Sans SC','Microsoft YaHei',sans-serif;
+  height:100vh;display:flex;overflow:hidden;
+  background:linear-gradient(135deg,#fdf2e9 0%,#fadbd8 25%,#f9e4d4 50%,#e8daef 75%,#d4e6f1 100%);
+  background-size:400% 400%;
+  animation:bgShift 20s ease infinite;
+}
+
+@keyframes bgShift{
+  0%,100%{background-position:0% 50%}
+  25%{background-position:100% 0%}
+  50%{background-position:100% 100%}
+  75%{background-position:0% 100%}
+}
+
+/* Decorative floating orbs */
+body::before{
+  content:'';position:fixed;top:-120px;right:-120px;
+  width:350px;height:350px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,183,128,.35),transparent 70%);
+  pointer-events:none;z-index:0;
+}
+body::after{
+  content:'';position:fixed;bottom:-100px;left:-100px;
+  width:300px;height:300px;border-radius:50%;
+  background:radial-gradient(circle,rgba(130,200,170,.25),transparent 70%);
+  pointer-events:none;z-index:0;
+}
+
+/* === Sidebar === */
+.sidebar{
+  width:260px;z-index:1;
+  background:linear-gradient(180deg,rgba(255,255,255,.85),rgba(255,255,255,.7));
+  backdrop-filter:blur(20px);
+  padding:20px 16px;display:flex;flex-direction:column;
+  border-right:1px solid rgba(0,0,0,.06);
+  box-shadow:2px 0 20px rgba(0,0,0,.04);
+}
+
+.sidebar h2{
+  font-size:20px;font-weight:700;margin-bottom:6px;
+  background:linear-gradient(135deg,#e67e22,#e74c3c);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+
+.sidebar .subtitle{font-size:11px;color:#999;margin-bottom:16px}
+
+.conv-list{flex:1;overflow-y:auto}
+.conv-item{
+  padding:11px 14px;margin-bottom:4px;border-radius:10px;
+  cursor:pointer;font-size:13px;color:#666;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  transition:all .2s;
+}
+.conv-item:hover{background:rgba(230,126,34,.1);color:#e67e22}
+.conv-item.active{background:linear-gradient(135deg,rgba(230,126,34,.15),rgba(231,76,60,.1));color:#e67e22;font-weight:500}
+
+/* === Main Area === */
+.main{flex:1;display:flex;flex-direction:column;z-index:1;max-width:960px;margin:0 auto;width:100%;padding:0 20px}
+
+/* Header */
+.header{
+  background:rgba(255,255,255,.75);backdrop-filter:blur(20px);
+  padding:14px 24px;display:flex;align-items:center;justify-content:space-between;
+  border-bottom:1px solid rgba(0,0,0,.05);
+  border-radius:0 0 20px 20px;
+  box-shadow:0 2px 12px rgba(0,0,0,.04);
+}
+.header h1{font-size:17px;font-weight:700;color:#555}
+.header .icons{display:flex;gap:6px}
+.header .icon-dot{width:8px;height:8px;border-radius:50%}
+.header .icon-dot.r{background:#e74c3c}
+.header .icon-dot.y{background:#f39c12}
+.header .icon-dot.g{background:#2ecc71}
+.badge{
+  font-size:11px;padding:4px 12px;border-radius:20px;
+  background:linear-gradient(135deg,#fce4d6,#fdebd0);
+  color:#e67e22;font-weight:600;
+}
+
+/* Chat Area */
+.chat-area{
+  flex:1;overflow-y:auto;padding:24px 20px;
+  scroll-behavior:smooth;
+}
+.chat-area::-webkit-scrollbar{width:5px}
+.chat-area::-webkit-scrollbar-thumb{background:rgba(0,0,0,.1);border-radius:10px}
+
+/* Welcome card */
+.welcome-card{
+  background:rgba(255,255,255,.7);backdrop-filter:blur(10px);
+  border-radius:18px;padding:24px 28px;margin-bottom:20px;
+  border:1px solid rgba(0,0,0,.04);
+  box-shadow:0 4px 16px rgba(0,0,0,.04);
+}
+.welcome-card h3{font-size:20px;color:#555;margin-bottom:8px}
+.welcome-card .capabilities{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.welcome-card .cap-tag{
+  padding:6px 14px;border-radius:20px;font-size:12px;font-weight:500;
+  background:linear-gradient(135deg,#ffeaa7,#fdcb6e);color:#d35400;
+}
+.welcome-card .cap-tag:nth-child(2){background:linear-gradient(135deg,#a29bfe,#6c5ce7);color:#fff}
+.welcome-card .cap-tag:nth-child(3){background:linear-gradient(135deg,#81ecec,#00cec9);color:#00695c}
+.welcome-card .cap-tag:nth-child(4){background:linear-gradient(135deg,#fd79a8,#e84393);color:#fff}
+.welcome-card .cap-tag:nth-child(5){background:linear-gradient(135deg,#fab1a0,#e17055);color:#fff}
+
+/* Messages */
+.message{margin-bottom:14px;display:flex;gap:10px;animation:fadeInUp .35s ease}
+.message.user{justify-content:flex-end}
+
+@keyframes fadeInUp{
+  from{opacity:0;transform:translateY(12px)}
+  to{opacity:1;transform:translateY(0)}
+}
+
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;font-weight:700;
+}
+.avatar.agent{
+  background:linear-gradient(135deg,#fdcb6e,#e17055);
+  color:#fff;box-shadow:0 3px 10px rgba(225,112,85,.3);
+}
+.avatar.user{
+  background:linear-gradient(135deg,#a29bfe,#6c5ce7);
+  color:#fff;box-shadow:0 3px 10px rgba(108,92,231,.3);
+}
+
+.bubble{
+  max-width:78%;padding:12px 18px;border-radius:16px;
+  line-height:1.6;font-size:14px;word-break:break-word;
+}
+.bubble.agent{
+  background:rgba(255,255,255,.8);backdrop-filter:blur(8px);
+  color:#444;border:1px solid rgba(0,0,0,.06);
+  box-shadow:0 2px 10px rgba(0,0,0,.03);
+  border-bottom-left-radius:4px;
+}
+.bubble.user{
+  background:linear-gradient(135deg,#6c5ce7,#a29bfe);
+  color:#fff;border-bottom-right-radius:4px;
+  box-shadow:0 2px 10px rgba(108,92,231,.2);
+}
+
+/* ReAct Events */
+.event{
+  margin:6px 0 6px 46px;padding:10px 16px;border-radius:10px;
+  font-size:13px;animation:fadeInUp .35s ease;
+  border-left:4px solid;
+}
+.event.iteration{border-color:#fdcb6e;background:rgba(253,203,110,.12)}
+.event.thought{border-color:#a29bfe;background:rgba(162,155,254,.1)}
+.event.action{border-color:#e17055;background:rgba(225,112,85,.1)}
+.event.observation{border-color:#00cec9;background:rgba(0,206,201,.08)}
+.event .label{font-weight:700;margin-right:6px;font-size:12px}
+.event .label.it{color:#e17055}
+.event .label.th{color:#6c5ce7}
+.event .label.ac{color:#e74c3c}
+.event .label.ob{color:#00b894}
+.event .tool{color:#d63031;font-weight:600;font-family:'SF Mono','Consolas',monospace}
+.event pre{
+  background:rgba(0,0,0,.03);padding:10px 12px;border-radius:8px;
+  overflow-x:auto;margin-top:6px;font-size:12px;color:#666;
+  max-height:180px;overflow-y:auto;
+}
+
+/* Input Area */
+.input-area{
+  padding:16px 20px;display:flex;gap:10px;align-items:center;
+  background:rgba(255,255,255,.75);backdrop-filter:blur(20px);
+  border-radius:20px 20px 0 0;
+  border-top:1px solid rgba(0,0,0,.05);
+  box-shadow:0 -2px 12px rgba(0,0,0,.03);
+}
+.input-area input{
+  flex:1;padding:13px 18px;border-radius:25px;
+  border:2px solid rgba(0,0,0,.08);background:rgba(255,255,255,.9);
+  color:#444;font-size:14px;outline:none;font-family:inherit;
+  transition:all .25s;
+}
+.input-area input:focus{border-color:#e17055;box-shadow:0 0 0 3px rgba(225,112,85,.1)}
+.input-area input::placeholder{color:#bbb}
+.input-area button{
+  padding:13px 28px;border-radius:25px;border:none;
+  background:linear-gradient(135deg,#e17055,#d63031);
+  color:#fff;font-size:14px;cursor:pointer;font-weight:600;
+  font-family:inherit;
+  transition:all .25s;
+  box-shadow:0 4px 14px rgba(214,48,49,.3);
+}
+.input-area button:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(214,48,49,.4)}
+.input-area button:disabled{opacity:.5;cursor:not-allowed;transform:none}
+
+/* Mode Toggle */
+.mode-toggle{display:flex;gap:3px;background:rgba(0,0,0,.04);border-radius:10px;padding:3px}
+.mode-toggle button{
+  padding:8px 16px;border:none;border-radius:8px;cursor:pointer;
+  font-size:12px;color:#888;background:transparent;font-family:inherit;
+  font-weight:500;transition:all .2s;
+}
+.mode-toggle button.active{
+  background:linear-gradient(135deg,#e17055,#d63031);
+  color:#fff;box-shadow:0 2px 8px rgba(214,48,49,.25);
+}
+
+/* New Chat Button */
+.btn-new{
+  width:100%;padding:11px;border-radius:10px;
+  border:2px dashed rgba(230,126,34,.3);background:rgba(230,126,34,.05);
+  color:#e67e22;cursor:pointer;margin-bottom:14px;font-size:13px;
+  font-family:inherit;font-weight:500;
+  transition:all .2s;
+}
+.btn-new:hover{background:rgba(230,126,34,.12);border-color:rgba(230,126,34,.5)}
+
+/* Typing indicator */
+.typing{display:flex;gap:5px;padding:14px 18px}
+.typing span{width:7px;height:7px;border-radius:50%;background:#ccc;animation:typing 1.4s infinite}
+.typing span:nth-child(2){animation-delay:.2s}
+.typing span:nth-child(3){animation-delay:.4s}
+@keyframes typing{0%,60%,100%{transform:translateY(0);opacity:.5}30%{transform:translateY(-8px);opacity:1}}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .main{padding:0}
+  .header{border-radius:0}
+  .input-area{border-radius:0}
+}
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h2>Life Agent</h2>
+  <div class="subtitle">生活服务综合智能体</div>
+  <div class="mode-toggle" style="margin-bottom:14px">
+    <button class="active" onclick="setMode('react')">Re-Act 推理</button>
+    <button onclick="setMode('auto')">Auto 速答</button>
+  </div>
+  <button class="btn-new" onclick="newChat()">+ 新对话</button>
+  <div class="conv-list" id="convList"></div>
+</div>
+
+<div class="main">
+  <div class="header">
+    <div>
+      <h1>生活服务智能体</h1>
+      <div style="display:flex;gap:5px;margin-top:2px">
+        <div class="icon-dot r"></div>
+        <div class="icon-dot y"></div>
+        <div class="icon-dot g"></div>
+      </div>
+    </div>
+    <span class="badge">v2.0</span>
+  </div>
+
+  <div class="chat-area" id="chatArea">
+    <div class="message">
+      <div class="avatar agent">AI</div>
+      <div>
+        <div class="welcome-card">
+          <h3>你好！我是你的生活智能助手 </h3>
+          <p style="color:#777;font-size:13px;line-height:1.6">
+            基于大模型的 Re-Act 模式 AI Agent，可以帮你完成各种任务——
+          </p>
+          <div class="capabilities">
+            <span class="cap-tag">天气查询</span>
+            <span class="cap-tag">数学计算</span>
+            <span class="cap-tag">文件管理</span>
+            <span class="cap-tag">MBTI测试</span>
+            <span class="cap-tag">美食推荐</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="input-area">
+    <input id="userInput" placeholder="问我任何问题，比如「北京今天天气如何？」..." onkeydown="if(event.key==='Enter')send()">
+    <button id="sendBtn" onclick="send()">发送</button>
+  </div>
+</div>
+
+<script>
+let mode='react',convId=null,streaming=false;
+let typingDiv=null;
+
+function setMode(m){mode=m;document.querySelectorAll('.mode-toggle button').forEach((b,i)=>b.classList.toggle('active',(i===0&&m==='react')||(i===1&&m==='auto')))}
+
+function scrollBottom(){const c=document.getElementById('chatArea');c.scrollTop=c.scrollHeight}
+
+function showTyping(){
+  if(typingDiv)return;
+  typingDiv=document.createElement('div');
+  typingDiv.className='message';
+  typingDiv.innerHTML='<div class="avatar agent">AI</div><div class="bubble agent"><div class="typing"><span></span><span></span><span></span></div></div>';
+  document.getElementById('chatArea').appendChild(typingDiv);
+  scrollBottom();
+}
+
+function hideTyping(){
+  if(typingDiv){typingDiv.remove();typingDiv=null}
+}
+
+function addBubble(role,html){
+  const d=document.createElement('div');
+  d.className='message '+(role==='user'?'user':'agent');
+  d.innerHTML=`<div class="avatar ${role==='user'?'user':'agent'}">${role==='user'?'U':'AI'}</div><div class="bubble ${role==='user'?'user':'agent'}">${html}</div>`;
+  document.getElementById('chatArea').appendChild(d);
+  scrollBottom();
+}
+
+function addEvent(type,html){
+  const d=document.createElement('div');
+  d.className='event '+type;
+  d.innerHTML=html;
+  document.getElementById('chatArea').appendChild(d);
+  scrollBottom();
+}
+
+async function send(){
+  if(streaming)return;
+  const inp=document.getElementById('userInput'),msg=inp.value.trim();
+  if(!msg)return;
+  inp.value='';streaming=true;
+  document.getElementById('sendBtn').disabled=true;
+
+  addBubble('user',msg.replace(/</g,'&lt;'));
+  showTyping();
+
+  try{
+    if(mode==='react'){
+      const url=`/api/v1/chat/stream?message=${encodeURIComponent(msg)}${convId?'&conversation_id='+convId:''}`;
+      const es=new EventSource(url);
+      es.onmessage=e=>{
+        hideTyping();
+        const evt=JSON.parse(e.data);
+        if(evt.done){
+          convId=evt.conversation_id;loadConvs();
+          es.close();streaming=false;document.getElementById('sendBtn').disabled=false;
+          return;
+        }
+        if(evt.event_type==='iteration'){
+          addEvent('iteration',`<span class="label it">Round ${evt.iteration}</span>`);
+        }else if(evt.event_type==='thought'){
+          addEvent('thought',`<span class="label th">Thinking...</span>${evt.content.replace(/</g,'&lt;').slice(0,300)}`);
+        }else if(evt.event_type==='action'){
+          addEvent('action',`<span class="label ac">Calling Tool</span><span class="tool">${evt.tool_name}</span>(${JSON.stringify(evt.tool_args)})`);
+        }else if(evt.event_type==='observation'){
+          let r=evt.tool_result||'';
+          try{r=JSON.stringify(JSON.parse(r),null,2)}catch(e){}
+          addEvent('observation',`<span class="label ob">Result</span><pre>${r.replace(/</g,'&lt;').slice(0,800)}</pre>`);
+        }else if(evt.event_type==='final_answer'){
+          addBubble('agent',evt.content.replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+          es.close();streaming=false;document.getElementById('sendBtn').disabled=false;
+        }else if(evt.event_type==='error'){
+          addBubble('agent','Error: '+evt.content);
+          es.close();streaming=false;document.getElementById('sendBtn').disabled=false;
+        }
+      };
+      es.onerror=()=>{hideTyping();es.close();streaming=false;document.getElementById('sendBtn').disabled=false};
+    }else{
+      const resp=await fetch('/api/v1/chat',{
+        method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({message:msg,conversation_id:convId})
+      });
+      const data=await resp.json();
+      hideTyping();
+      convId=data.conversation_id;
+      addBubble('agent',data.answer.replace(/</g,'&lt;').replace(/\n/g,'<br>'));
+      loadConvs();streaming=false;document.getElementById('sendBtn').disabled=false;
+    }
+  }catch(e){
+    hideTyping();
+    addBubble('agent','Error: '+e.message);
+    streaming=false;document.getElementById('sendBtn').disabled=false;
+  }
+}
+
+async function loadConvs(){
+  try{
+    const r=await fetch('/api/v1/conversations');
+    const data=await r.json();
+    document.getElementById('convList').innerHTML=data.map(c=>
+      `<div class="conv-item${c.id===convId?' active':''}" onclick="selectConv('${c.id}')">${c.title.replace(/</g,'&lt;')||'New Chat'}</div>`
+    ).join('');
+  }catch(e){}
+}
+
+async function selectConv(id){convId=id;loadConvs()}
+function newChat(){convId=null;loadConvs();document.getElementById('chatArea').innerHTML='<div class="message"><div class="avatar agent">AI</div><div><div class="welcome-card"><h3>开始新的对话</h3><p style="color:#777;font-size:13px">有什么可以帮你的？</p></div></div></div>'}
+loadConvs();
+</script>
+</body>
+</html>

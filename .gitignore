@@ -1,0 +1,114 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# Environment
+.env
+!.env.example
+
+# Data
+data/faiss_index/*
+data/*.db
+!data/documents/.gitkeep
+
+# Workspace
+workspace/*
+!workspace/.gitkeep
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+.docker/
+
+# ============================================
+# 历史版本代码（第一代单体实现，已由 src/ 取代）
+# 保留在本地作为演进记录，不纳入版本控制
+# ============================================
+/agent/
+/rag/
+/mcp/
+/compute/
+/file_ops/
+/utils/
+/main.py
+/config.yaml
+
+# ============================================
+# 本地草稿（个人使用，不入库）
+# ============================================
+/scratch/
+*.draft.md
+*.local.*
+
+# ============================================
+# 密钥文件
+# ============================================
+.env.*
+!.env.example
+**/.env
+**/.env.*
+!**/.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+credentials.json
+secrets.json
+
+# ============================================
+# 测试与覆盖率
+# ============================================
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.nox/
+.cache
+coverage.xml
+*.log
+
+# ============================================
+# 模型权重
+# ============================================
+*.pt
+*.pth
+*.onnx
+*.h5
+*.safetensors
+# 注意：必须写成 /models/（前导斜杠 = 只匹配仓库根目录）
+# 裸写 models/ 会匹配任意层级的同名目录，会误伤 src/models/ 这类代码目录
+/models/
+.cache/huggingface/
+.cache/torch/
+
+# ============================================
+# 前端（若有）
+# ============================================
+node_modules/
+**/dist/
+**/.vite/
+.vite/
+*.local
+
+# ============================================
+# 其他
+# ============================================
+*.bak
+*.tmp
+*.orig
+*.rej
+temp/
+tmp/
